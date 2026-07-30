@@ -6,9 +6,19 @@ export async function updateSession(request: NextRequest) {
     request,
   })
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+  // Cek apakah URL valid sebelum memanggil createServerClient
+  if (!supabaseUrl || !supabaseUrl.startsWith('http')) {
+    throw new Error(
+      "❌ ERROR: URL Supabase tidak valid! Buka file .env.local dan ganti 'your_supabase_url_here' dengan URL asli dari dashboard Supabase kamu."
+    )
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         getAll() {
