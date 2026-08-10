@@ -1,12 +1,13 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import { createClient } from '@/lib/supabase/server'
+import prisma from '@/lib/prisma'
 import { CheckCircle2, Clock, ShieldCheck, Wrench } from 'lucide-react'
 
 export default async function CustomerHomePage() {
-  const supabase = await createClient()
-  const { data: layanan } = await supabase.from('layanan').select('*').order('created_at', { ascending: true })
+  const layanan = await prisma.layanan.findMany({
+    orderBy: { createdAt: 'asc' },
+  })
 
   return (
     <div className="flex-1 w-full flex flex-col items-center">
@@ -127,20 +128,20 @@ export default async function CustomerHomePage() {
               <div key={item.id} className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border bg-card text-card-foreground shadow-sm transition-all hover:shadow-lg hover:border-primary/50">
                 <div className="p-8">
                   <div className="mb-4">
-                    <h3 className="text-2xl font-bold">{item.nama_layanan}</h3>
+                    <h3 className="text-2xl font-bold">{item.namaLayanan}</h3>
                   </div>
                   <p className="text-muted-foreground mb-6 line-clamp-3">{item.deskripsi}</p>
                   
                   <div className="flex items-end gap-2 mb-8">
                     <span className="text-3xl font-bold text-foreground">
-                      Rp {item.harga.toLocaleString('id-ID')}
+                      Rp {Number(item.harga).toLocaleString('id-ID')}
                     </span>
                   </div>
                   
                   <ul className="space-y-3 mb-8">
                     <li className="flex items-center text-sm text-muted-foreground">
                       <Clock className="mr-2 h-4 w-4 text-primary" />
-                      Estimasi: {item.estimasi_waktu} menit
+                      Estimasi: {item.estimasiWaktu} menit
                     </li>
                   </ul>
                 </div>

@@ -73,6 +73,13 @@ CREATE TABLE public.transaksi (
 -- ==============================================================================
 -- 3. ROW LEVEL SECURITY (RLS) POLICIES
 -- ==============================================================================
+
+-- Helper function to get user role without causing infinite recursion
+CREATE OR REPLACE FUNCTION public.get_user_role()
+RETURNS text AS $$
+  SELECT role FROM public.users WHERE id = auth.uid();
+$$ LANGUAGE sql SECURITY DEFINER SET search_path = public;
+
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.kendaraan ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.layanan ENABLE ROW LEVEL SECURITY;
@@ -86,12 +93,12 @@ CREATE POLICY "Users can read own data" ON public.users
 -- 2. Admins and Super Admins can read all users
 CREATE POLICY "Admins can read all users" ON public.users
   FOR SELECT USING (
-    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
+    public.get_user_role() IN ('admin', 'super_admin')
   );
 -- 3. Super Admins can insert/update/delete users
 CREATE POLICY "Super Admins can modify users" ON public.users
   FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'super_admin')
+    public.get_user_role() = 'super_admin'
   );
 
 -- kendaraan Table Policies
@@ -104,7 +111,7 @@ CREATE POLICY "Customers can modify own vehicles" ON public.kendaraan
 -- 3. Admins and Super Admins can read/modify all vehicles
 CREATE POLICY "Admins can access all vehicles" ON public.kendaraan
   FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
+    public.get_user_role() IN ('admin', 'super_admin')
   );
 
 -- layanan Table Policies
@@ -114,7 +121,7 @@ CREATE POLICY "Everyone can read services" ON public.layanan
 -- 2. Only Admins and Super Admins can modify services
 CREATE POLICY "Admins can modify services" ON public.layanan
   FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
+    public.get_user_role() IN ('admin', 'super_admin')
   );
 
 -- booking Table Policies
@@ -130,7 +137,7 @@ CREATE POLICY "Customers can update own bookings" ON public.booking
 -- 4. Admins and Super Admins can read/modify all bookings
 CREATE POLICY "Admins can access all bookings" ON public.booking
   FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
+    public.get_user_role() IN ('admin', 'super_admin')
   );
 
 -- transaksi Table Policies
@@ -142,7 +149,7 @@ CREATE POLICY "Customers can read own transactions" ON public.transaksi
 -- 2. Admins and Super Admins can read/modify all transactions
 CREATE POLICY "Admins can access all transactions" ON public.transaksi
   FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
+    public.get_user_role() IN ('admin', 'super_admin')
   );
 
 

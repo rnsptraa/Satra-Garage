@@ -1,16 +1,11 @@
-import { createClient } from '@/lib/supabase/server'
+import prisma from '@/lib/prisma'
 
 export default async function AdminDashboardPage() {
-  const supabase = await createClient()
-  
-  const { count: pendingBookings } = await supabase
-    .from('booking')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'Menunggu')
+  const pendingBookings = await prisma.booking.count({
+    where: { status: 'Menunggu' },
+  })
     
-  const { count: totalServices } = await supabase
-    .from('layanan')
-    .select('*', { count: 'exact', head: true })
+  const totalServices = await prisma.layanan.count()
 
   return (
     <div className="p-8">

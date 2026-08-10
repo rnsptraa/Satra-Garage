@@ -1,39 +1,24 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Wrench } from 'lucide-react'
+import { login } from '@/app/actions/auth'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
-  const supabase = createClient()
+  const [isPending, startTransition] = useTransition()
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+  const handleLogin = async (formData: FormData) => {
     setError(null)
-    
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+    startTransition(async () => {
+      const result = await login(formData)
+      if (result?.error) {
+        setError(result.error)
+      }
     })
-
-    if (error) {
-      setError(error.message)
-      setLoading(false)
-      return
-    }
-
-    router.push('/')
-    router.refresh()
   }
 
   return (
@@ -51,7 +36,7 @@ export default function LoginPage() {
         </p>
       </div>
       <div className="bg-card p-8 shadow-sm border border-border rounded-xl">
-        <form className="space-y-6" onSubmit={handleLogin}>
+        <form className="space-y-6" action={handleLogin}>
           {error && (
             <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
               {error}
@@ -62,9 +47,8 @@ export default function LoginPage() {
             <div className="mt-1">
               <Input
                 type="email"
+                name="email"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 placeholder="email@example.com"
               />
             </div>
@@ -74,16 +58,15 @@ export default function LoginPage() {
             <div className="mt-1">
               <Input
                 type="password"
+                name="password"
                 required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 placeholder="********"
               />
             </div>
           </div>
           <div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Memproses...' : 'Masuk'}
+            <Button type="submit" className="w-full" disabled={isPending}>
+              {isPending ? 'Memproses...' : 'Masuk'}
             </Button>
           </div>
         </form>

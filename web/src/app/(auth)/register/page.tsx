@@ -1,47 +1,24 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Wrench } from 'lucide-react'
+import { register } from '@/app/actions/auth'
 
 export default function RegisterPage() {
-  const [nama, setNama] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [noTelepon, setNoTelepon] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
-  const supabase = createClient()
+  const [isPending, startTransition] = useTransition()
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+  const handleRegister = async (formData: FormData) => {
     setError(null)
-    
-    const { error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          nama,
-          role: 'pelanggan'
-        }
+    startTransition(async () => {
+      const result = await register(formData)
+      if (result?.error) {
+        setError(result.error)
       }
     })
-
-    if (signUpError) {
-      setError(signUpError.message)
-      setLoading(false)
-      return
-    }
-
-    router.push('/')
-    router.refresh()
   }
 
   return (
@@ -59,7 +36,7 @@ export default function RegisterPage() {
         </p>
       </div>
       <div className="bg-card p-8 shadow-sm border border-border rounded-xl">
-        <form className="space-y-6" onSubmit={handleRegister}>
+        <form className="space-y-6" action={handleRegister}>
           {error && (
             <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
               {error}
@@ -70,9 +47,8 @@ export default function RegisterPage() {
             <div className="mt-1">
               <Input
                 type="text"
+                name="nama"
                 required
-                value={nama}
-                onChange={(e) => setNama(e.target.value)}
                 placeholder="John Doe"
               />
             </div>
@@ -82,9 +58,8 @@ export default function RegisterPage() {
             <div className="mt-1">
               <Input
                 type="email"
+                name="email"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 placeholder="email@example.com"
               />
             </div>
@@ -94,8 +69,7 @@ export default function RegisterPage() {
             <div className="mt-1">
               <Input
                 type="tel"
-                value={noTelepon}
-                onChange={(e) => setNoTelepon(e.target.value)}
+                name="noTelepon"
                 placeholder="08123456789"
               />
             </div>
@@ -105,16 +79,15 @@ export default function RegisterPage() {
             <div className="mt-1">
               <Input
                 type="password"
+                name="password"
                 required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 placeholder="********"
               />
             </div>
           </div>
           <div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Memproses...' : 'Daftar'}
+            <Button type="submit" className="w-full" disabled={isPending}>
+              {isPending ? 'Memproses...' : 'Daftar'}
             </Button>
           </div>
         </form>
