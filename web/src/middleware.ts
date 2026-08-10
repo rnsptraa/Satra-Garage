@@ -22,32 +22,35 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Protected routes
-  if (!session) {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
-
-  try {
-    const { payload } = await jwtVerify(session, key, { algorithms: ['HS256'] })
-    
-    // Authorization logic
-    const isAdminRoute = request.nextUrl.pathname.startsWith('/admin')
-    const isSuperAdminRoute = request.nextUrl.pathname.startsWith('/admin/super-admin')
-    
-    if (isAdminRoute && !['ADMIN', 'SUPER_ADMIN'].includes(payload.role as string)) {
-      return NextResponse.redirect(new URL('/', request.url))
-    }
-    
-    if (isSuperAdminRoute && payload.role !== 'SUPER_ADMIN') {
-      return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+  const isProtectedRoute = request.nextUrl.pathname.startsWith('/booking') || request.nextUrl.pathname.startsWith('/admin')
+  
+  if (isProtectedRoute) {
+    if (!session) {
+      return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    // Refresh session (optional, simplified here)
-    const res = NextResponse.next()
-    return res
-  } catch (error) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    try {
+      const { payload } = await jwtVerify(session, key, { algorithms: ['HS256'] })
+      
+      // Authorization logic
+      const isAdminRoute = request.nextUrl.pathname.startsWith('/admin')
+      const isSuperAdminRoute = request.nextUrl.pathname.startsWith('/admin/super-admin')
+      
+      if (isAdminRoute && !['ADMIN', 'SUPER_ADMIN'].includes(payload.role as string)) {
+        return NextResponse.redirect(new URL('/', request.url))
+      }
+      
+      if (isSuperAdminRoute && payload.role !== 'SUPER_ADMIN') {
+        return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+      }
+    } catch (error) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
   }
+
+  // Refresh session (optional, simplified here)
+  const res = NextResponse.next()
+  return res
 }
 
 export const config = {

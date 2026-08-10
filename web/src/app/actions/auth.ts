@@ -1,9 +1,9 @@
 'use server'
 
-import prisma from '@/lib/prisma'
 import { createSession, destroySession } from '@/lib/auth'
-import bcrypt from 'bcryptjs'
 import { redirect } from 'next/navigation'
+
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5000/api'
 
 export async function login(formData: FormData) {
   const email = formData.get('email') as string
@@ -13,21 +13,30 @@ export async function login(formData: FormData) {
     return { error: 'Email dan Password wajib diisi' }
   }
 
-  const user = await prisma.user.findUnique({
-    where: { email },
-  })
+  try {
+    const res = await fetch(`${BACKEND_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    })
 
-  if (!user) {
-    return { error: 'Email atau password salah' }
+    const data = await res.json()
+    if (!res.ok) {
+      return { error: data.error || 'Terjadi kesalahan saat login' }
+    }
+
+    await createSession(data.user.id, data.user.role)
+    
+    if (data.user.role === 'ADMIN' || data.user.role === 'SUPER_ADMIN') {
+      redirect('/admin/dashboard')
+    } else {
+      redirect('/')
+    }
+  } catch (err: any) {
+    console.error(err)
+    if (err.message === 'NEXT_REDIRECT') throw err
+    return { error: 'Gagal terhubung ke server backend' }
   }
-
-  const isValidPassword = await bcrypt.compare(password, user.password)
-  if (!isValidPassword) {
-    return { error: 'Email atau password salah' }
-  }
-
-  await createSession(user.id, user.role)
-  redirect('/')
 }
 
 export async function register(formData: FormData) {
@@ -40,28 +49,25 @@ export async function register(formData: FormData) {
     return { error: 'Nama, Email, dan Password wajib diisi' }
   }
 
-  const existingUser = await prisma.user.findUnique({
-    where: { email },
-  })
+  try {
+    const res = await fetch(`${BACKEND_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, nama, no_telepon: noTelepon })
+    })
 
-  if (existingUser) {
-    return { error: 'Email sudah terdaftar' }
+    const data = await res.json()
+    if (!res.ok) {
+      return { error: data.error || 'Terjadi kesalahan saat registrasi' }
+    }
+
+    await createSession(data.user.id, 'PELANGGAN')
+    redirect('/')
+  } catch (err: any) {
+    console.error(err)
+    if (err.message === 'NEXT_REDIRECT') throw err
+    return { error: 'Gagal terhubung ke server backend' }
   }
-
-  const hashedPassword = await bcrypt.hash(password, 10)
-
-  const user = await prisma.user.create({
-    data: {
-      nama,
-      email,
-      no_telepon: noTelepon,
-      password: hashedPassword,
-      role: 'PELANGGAN',
-    },
-  })
-
-  await createSession(user.id, user.role)
-  redirect('/')
 }
 
 export async function logout() {
