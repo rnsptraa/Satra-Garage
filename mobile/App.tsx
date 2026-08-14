@@ -17,12 +17,12 @@ export type RootStackParamList = {
   AdminApp: undefined;
 };
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
+const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
     <NavigationContainer>
-      <StatusBar style="light" backgroundColor="#000000" />
+      <StatusBar style="light" />
       <Stack.Navigator
         initialRouteName="Landing"
         screenOptions={{

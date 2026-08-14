@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, backgroundColor: '#0F172A', borderBottomWidth: 4, borderBottomColor: '#DC2626' },
   greeting: { color: '#94A3B8', fontSize: 12, fontWeight: 'bold' },
   userName: { color: '#FFF', fontSize: 18, fontWeight: '900', fontStyle: 'italic', textTransform: 'uppercase' },
-  logoutBtn: { backgroundColor: '#DC2626', p: 8, padding: 8, borderRadius: 50 },
+  logoutBtn: { backgroundColor: '#DC2626', padding: 8, borderRadius: 50 },
   scrollContent: { padding: 20, paddingBottom: 40 },
   heroCard: { backgroundColor: '#1E293B', padding: 24, borderWidth: 2, borderColor: '#334155', borderLeftWidth: 8, borderLeftColor: '#DC2626', marginBottom: 30 },
   heroTitle: { color: '#FFF', fontSize: 24, fontWeight: '900', fontStyle: 'italic', marginBottom: 10 },
